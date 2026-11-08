@@ -1,0 +1,2046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SECOND SHELF - Give Your Old Books a Second Life | Used Books & Recycle Scrap Marketplace</title>
+  <meta name="description" content="India's Amazon-inspired marketplace connecting sellers with registered used-book stalls and certified recycle scrap owners. Sell old textbooks and recycle paper & scrap.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231b4332'><path d='M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z'/><path d='M6 2v20'/></svg>">
+  
+  <!-- Tailwind CSS CDN with configuration -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            shelf: {
+              dark: '#0f261c',       // Amazon-style deep forest navy
+              navy: '#131921',       // Classic Amazon dark
+              forest: '#1b4332',     // Rich deep green
+              emerald: '#2d6a4f',    // Vibrant emerald
+              lightgreen: '#d8f3dc', // Soft mint accent
+              cream: '#fdfbf7',      // Primary warm cream background
+              creamborder: '#ede8dd',
+              gold: '#f59e0b',       // Amazon amber button
+              goldhover: '#d97706',
+              yellow: '#febd69',     // Amazon yellow
+              orange: '#f97316'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Amazon-inspired scrollbar & micro-interactions */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; }
+    ::-webkit-scrollbar-thumb { background: #b0c4b1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #40916c; }
+    
+    .amazon-focus:focus {
+      outline: 2px solid #f59e0b;
+      outline-offset: 1px;
+    }
+    .badge-demo {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border: 1px solid #f59e0b;
+      color: #92400e;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    .modal-backdrop {
+      background-color: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(2px);
+    }
+  </style>
+  
+  <!-- Canvas Confetti for celebratory milestone animations -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js"></script>
+  <!-- Supabase JS Client v2 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-shelf-cream text-slate-800 antialiased min-h-screen flex flex-col font-sans">
+
+  <!-- ==================================================================== -->
+  <!-- MAIN NAVIGATION BAR (Amazon-Inspired Dark Green / Slate)             -->
+  <!-- ==================================================================== -->
+  <header class="bg-shelf-forest sticky top-0 z-40 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 gap-3 sm:gap-4">
+        
+        <!-- Logo & Tagline -->
+        <a href="#" onclick="showSection('home')" class="flex items-center gap-2 group flex-shrink-0">
+          <div class="w-10 h-10 rounded-lg bg-emerald-900 border border-amber-400/80 flex items-center justify-center text-amber-400 text-xl shadow-inner group-hover:scale-105 transition-transform">
+            📚
+          </div>
+          <div class="flex flex-col">
+            <span class="text-white font-extrabold text-xl tracking-wider flex items-center gap-1">
+              SECOND<span class="text-amber-400">SHELF</span>
+            </span>
+            <span class="text-[10px] text-emerald-200/90 font-medium -mt-1 hidden sm:inline" id="tagline-text">
+              Give Your Old Books a Second Life
+            </span>
+          </div>
+        </a>
+
+        <!-- Location Badge (Amazon style) -->
+        <div class="hidden lg:flex items-center text-white text-xs gap-1 cursor-pointer hover:border hover:border-white/40 p-1.5 rounded">
+          <span class="text-amber-400 text-base">📍</span>
+          <div class="flex flex-col leading-tight">
+            <span class="text-slate-300 text-[10px]" id="nav-location-label">Deliver / Pickup</span>
+            <span class="font-bold text-slate-100">Bengaluru 560001</span>
+          </div>
+        </div>
+
+        <!-- Search Bar with Category Dropdown -->
+        <div class="flex-1 max-w-2xl mx-1 sm:mx-2">
+          <div class="flex rounded-md overflow-hidden shadow-sm bg-white focus-within:ring-2 focus-within:ring-amber-500">
+            <select id="search-category" class="bg-slate-100 text-slate-700 text-xs px-2 sm:px-3 py-2 border-r border-slate-300 outline-none cursor-pointer hidden md:block">
+              <option value="all">All Categories</option>
+              <option value="used-books">Used Books</option>
+              <option value="raddi">Recycle Scrap (Paper & Cardboard)</option>
+              <option value="engineering">Engineering Books</option>
+              <option value="degree">Degree Textbooks</option>
+              <option value="medical">Medical & Exam Prep</option>
+            </select>
+            <input 
+              type="text" 
+              id="search-input" 
+              placeholder="Search by book title, author, subject, or recycle scrap type..." 
+              class="w-full px-3 py-2 text-sm text-slate-900 outline-none"
+              onkeyup="handleSearch(event)"
+            />
+            <button 
+              onclick="executeSearch()" 
+              class="bg-shelf-gold hover:bg-shelf-goldhover text-slate-950 px-4 flex items-center justify-center font-bold transition-colors"
+              title="Search"
+            >
+              🔍
+            </button>
+          </div>
+        </div>
+
+        <!-- Account, Role Dashboard & CTA -->
+        <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          
+          <!-- Supabase Backend Status Indicator & Setup -->
+          <button 
+            onclick="openSupabaseConfigModal()" 
+            id="supabase-status-badge" 
+            class="bg-emerald-950/90 text-emerald-300 hover:text-white border border-emerald-700/80 hover:border-amber-400 px-2.5 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 shadow-sm transition"
+            title="Configure Supabase Live Database Connection"
+          >
+            <span id="supabase-status-dot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span id="supabase-status-text" class="hidden md:inline">Supabase</span>
+          </button>
+
+          <!-- Real-Time Notification Bell -->
+          <button 
+            onclick="openNotificationsModal()" 
+            id="notification-bell-btn" 
+            class="relative text-white hover:text-amber-300 p-1.5 rounded-md bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-700/80 transition"
+            title="Notifications & Alerts"
+          >
+            <span class="text-base">🔔</span>
+            <span id="notification-unread-count" class="hidden absolute -top-1 -right-1 bg-rose-600 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full shadow-sm animate-bounce">0</span>
+          </button>
+
+          <!-- Language Toggle (Preserved with dynamic Kannada / English switch) -->
+          <button 
+            onclick="toggleLanguage()" 
+            id="lang-toggle-btn" 
+            class="text-white hover:text-amber-300 font-medium flex items-center gap-1.5 bg-emerald-950/80 hover:bg-emerald-900 px-2.5 py-1.5 rounded-md border border-emerald-700/80 hover:border-amber-400 text-xs shadow-sm transition"
+            title="Change Language / ಭಾಷೆಯನ್ನು ಬದಲಾಯಿಸಿ"
+          >
+            <span id="current-lang-icon">🌐</span>
+            <span id="current-lang-text">ಕನ್ನಡ (Kannada)</span>
+          </button>
+
+          <!-- Current Role Dashboard Link -->
+          <button 
+            onclick="openCurrentRoleDashboard()" 
+            class="flex items-center gap-1.5 text-white hover:text-amber-300 px-2 py-1 rounded text-xs sm:text-sm font-semibold border border-emerald-700 hover:border-amber-400 transition"
+          >
+            <span id="role-icon">👤</span>
+            <div class="flex flex-col text-left leading-tight hidden sm:flex">
+              <span class="text-[10px] text-emerald-200" id="user-greeting">Welcome, Priya</span>
+              <span class="font-bold text-amber-300" id="user-role-badge">Seller Dashboard</span>
+            </div>
+          </button>
+
+          <!-- Separate Portals / Sign In Button -->
+          <button 
+            onclick="openPortalSelector()" 
+            class="bg-emerald-900/90 hover:bg-emerald-800 text-amber-300 border border-emerald-700 hover:border-amber-400 font-semibold px-2.5 py-1.5 rounded text-xs flex items-center gap-1 shadow-sm transition"
+            title="Choose from User, Stall, Recycler or Web Creator Login"
+          >
+            <span>🔑</span>
+            <span class="hidden md:inline">Portals</span>
+          </button>
+
+          <!-- Sell Button CTA -->
+          <button 
+            onclick="openSellActionSelector()" 
+            class="bg-shelf-gold hover:bg-shelf-goldhover text-slate-950 font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded-md shadow text-xs sm:text-sm flex items-center gap-1.5 transition active:scale-95"
+            id="sell-cta-btn"
+          >
+            <span>➕</span>
+            <span class="hidden xs:inline">Sell Now</span>
+          </button>
+
+          <!-- Auth Button -->
+          <button 
+            onclick="logout()" 
+            id="auth-nav-btn" 
+            class="text-xs text-slate-300 hover:text-rose-300 underline font-medium ml-1"
+          >
+            Sign Out
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Secondary Sub-Navigation Bar (Amazon style) -->
+    <div class="bg-shelf-emerald text-white text-xs px-4 sm:px-6 lg:px-8 py-2 overflow-x-auto border-t border-emerald-800">
+      <div class="max-w-7xl mx-auto flex items-center gap-4 sm:gap-6 whitespace-nowrap font-medium">
+        <button onclick="showSection('home')" class="hover:text-amber-300 flex items-center gap-1">
+          <span>🏠</span> <span id="subnav-home">Home</span>
+        </button>
+        <button onclick="showSection('used-books-page')" class="hover:text-amber-300 flex items-center gap-1">
+          <span>📖</span> <span id="subnav-used-books">Used Books</span>
+        </button>
+        <button onclick="showSection('raddi-page')" class="hover:text-amber-300 flex items-center gap-1">
+          <span>♻️</span> <span id="subnav-raddi">Recycle Scrap (10+ kg)</span>
+        </button>
+        <button onclick="openBookSubmissionModal()" class="hover:text-amber-300 flex items-center gap-1">
+          <span>➕</span> <span id="subnav-submit-book">Submit Used Book</span>
+        </button>
+        <button onclick="openRaddiSubmissionModal()" class="hover:text-amber-300 flex items-center gap-1">
+          <span>⚖️</span> <span id="subnav-submit-raddi">Submit Recycle Scrap Request</span>
+        </button>
+        <button onclick="scrollToCalculator()" class="hover:text-amber-300 flex items-center gap-1">
+          <span>🧮</span> <span id="subnav-calculator">Price Estimator</span>
+        </button>
+        <button onclick="openPolicyModal('two-party-payment')" class="hover:text-amber-300 flex items-center gap-1 text-amber-200">
+          <span>🤝</span> <span id="subnav-payment-policy">Payment Confirmation Rules</span>
+        </button>
+        <button onclick="openPolicyModal('dpdp-privacy')" class="hover:text-amber-300 flex items-center gap-1">
+          <span>🔒</span> <span id="subnav-privacy">DPDP Privacy (India)</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================================================================== -->
+  <!-- MAIN CONTENT CONTAINER                                               -->
+  <!-- ==================================================================== -->
+  <main class="flex-1 pb-16">
+
+    <!-- Toast Notification Overlay -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+    <!-- SECTION: HOMEPAGE -->
+    <div id="section-home" class="space-y-8">
+      
+      <!-- HERO BANNER (Amazon style hero with gradient & cards overlay) -->
+      <section class="relative bg-gradient-to-b from-shelf-forest via-emerald-900 to-shelf-cream pt-8 pb-20 px-4 sm:px-6 lg:px-8 text-white overflow-hidden shadow-inner">
+        <div class="max-w-7xl mx-auto relative z-10">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            
+            <div class="lg:col-span-7 space-y-4 text-center lg:text-left">
+              <!-- All 4 Logins in a Horizontal Line (Upon India's Premier College & Community Marketplace) -->
+              <div class="flex items-center gap-2 overflow-x-auto pb-1 max-w-full justify-center lg:justify-start" style="scrollbar-width: none;">
+                <span class="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1 flex-shrink-0">
+                  <span>🔑</span> Logins:
+                </span>
+                <button 
+                  onclick="openLoginPortal('seller')" 
+                  id="hero-portal-seller" 
+                  class="bg-emerald-800/90 hover:bg-emerald-700 text-white border border-emerald-500/70 hover:border-amber-300 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-md hover:shadow-lg transition transform hover:-translate-y-0.5 whitespace-nowrap flex-shrink-0"
+                >
+                  <span>👤</span> User / Seller Login
+                </button>
+                <button 
+                  onclick="openLoginPortal('book_stall')" 
+                  id="hero-portal-book_stall" 
+                  class="bg-slate-800/90 hover:bg-slate-700 text-slate-100 border border-slate-600 hover:border-amber-300 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-md hover:shadow-lg transition transform hover:-translate-y-0.5 whitespace-nowrap flex-shrink-0"
+                >
+                  <span>🏬</span> Stall Owner Login
+                </button>
+                <button 
+                  onclick="openLoginPortal('raddi_owner')" 
+                  id="hero-portal-raddi_owner" 
+                  class="bg-amber-950/90 hover:bg-amber-900 text-amber-200 border border-amber-600/70 hover:border-amber-300 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-md hover:shadow-lg transition transform hover:-translate-y-0.5 whitespace-nowrap flex-shrink-0"
+                >
+                  <span>♻️</span> Recycle Scrap Owner Login
+                </button>
+                <button 
+                  onclick="openLoginPortal('admin')" 
+                  id="hero-portal-admin" 
+                  class="bg-rose-950/90 hover:bg-rose-900 text-rose-200 border border-rose-800 hover:border-rose-400 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-md hover:shadow-lg transition transform hover:-translate-y-0.5 whitespace-nowrap flex-shrink-0" 
+                  title="Restricted to Website Creator Only"
+                >
+                  <span>🔐</span> Admin
+                </button>
+              </div>
+
+              <div class="inline-flex items-center gap-2 bg-emerald-800/80 border border-emerald-600/60 rounded-full px-3 py-1 text-xs font-semibold text-emerald-200">
+                <span>🌱</span> India's Premier College & Community Marketplace
+              </div>
+              <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight" id="hero-title">
+                Sell Your Old Books.<br/>
+                Recycle Your Paper.<br/>
+                <span class="text-shelf-yellow">Earn Money.</span>
+              </h1>
+              <p class="text-emerald-100 text-sm sm:text-base max-w-2xl mx-auto lg:mx-0" id="hero-subtitle">
+                Connect directly with certified local book stalls and verified recycle scrap dealers. Transparent condition estimates, doorstep pickup or counter handover, and secure two-party payment confirmation.
+              </p>
+
+              <!-- Hero CTA Buttons -->
+              <div class="flex flex-wrap items-center justify-center lg:justify-start gap-3 pt-2">
+                <button 
+                  onclick="openBookSubmissionModal()" 
+                  class="bg-shelf-gold hover:bg-shelf-goldhover text-slate-950 font-bold px-6 py-3 rounded-lg shadow-lg text-sm sm:text-base flex items-center gap-2 transform hover:-translate-y-0.5 transition"
+                >
+                  <span>📚</span> <span id="hero-cta-books">Sell Used Books</span>
+                </button>
+                <button 
+                  onclick="openRaddiSubmissionModal()" 
+                  class="bg-emerald-700 hover:bg-emerald-600 border border-emerald-400 text-white font-bold px-6 py-3 rounded-lg shadow-lg text-sm sm:text-base flex items-center gap-2 transform hover:-translate-y-0.5 transition"
+                >
+                  <span>♻️</span> <span id="hero-cta-raddi">Sell Recycle Scrap (Min 10 kg)</span>
+                </button>
+                <button 
+                  onclick="scrollToCalculator()" 
+                  class="bg-slate-900/60 hover:bg-slate-900 text-emerald-200 border border-emerald-700/60 font-semibold px-4 py-3 rounded-lg text-sm flex items-center gap-1.5 transition"
+                >
+                  <span>🧮</span> Calculate Estimate
+                </button>
+              </div>
+
+              <!-- Live Counter Badges -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-6 text-center border-t border-emerald-800/80">
+                <div class="bg-emerald-950/40 p-2 rounded border border-emerald-800/40">
+                  <div class="text-xl sm:text-2xl font-black text-amber-300">12,480+</div>
+                  <div class="text-[11px] text-emerald-200">Books Re-homed</div>
+                </div>
+                <div class="bg-emerald-950/40 p-2 rounded border border-emerald-800/40">
+                  <div class="text-xl sm:text-2xl font-black text-emerald-300">48,600 kg</div>
+                  <div class="text-[11px] text-emerald-200">Paper Recycled</div>
+                </div>
+                <div class="bg-emerald-950/40 p-2 rounded border border-emerald-800/40">
+                  <div class="text-xl sm:text-2xl font-black text-amber-300">₹14.9 Lakh</div>
+                  <div class="text-[11px] text-emerald-200">Paid to Sellers</div>
+                </div>
+                <div class="bg-emerald-950/40 p-2 rounded border border-emerald-800/40">
+                  <div class="text-xl sm:text-2xl font-black text-white">88+</div>
+                  <div class="text-[11px] text-emerald-200">Verified Stalls & Recyclers</div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Quick Valuation Estimator Card (Amazon style on Hero) -->
+            <div class="lg:col-span-5">
+              <div class="bg-white rounded-xl shadow-2xl p-5 sm:p-6 text-slate-800 border-2 border-emerald-700/30">
+                <div class="flex items-center justify-between border-b pb-3 mb-4">
+                  <div class="flex items-center gap-2">
+                    <span class="text-2xl">⚡</span>
+                    <div>
+                      <h3 class="font-bold text-slate-900 text-base leading-tight">Instant Payout Estimator</h3>
+                      <p class="text-xs text-slate-500">Official percentage guidelines</p>
+                    </div>
+                  </div>
+                  <span class="badge-demo">Live Rules</span>
+                </div>
+
+                <div class="space-y-3">
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Select Item Type</label>
+                    <div class="grid grid-cols-2 gap-2">
+                      <button type="button" id="calc-tab-book" onclick="setCalcTab('book')" class="py-2 px-3 text-xs font-bold rounded border bg-emerald-50 border-emerald-600 text-emerald-800 text-center">
+                        📖 Used Book
+                      </button>
+                      <button type="button" id="calc-tab-raddi" onclick="setCalcTab('raddi')" class="py-2 px-3 text-xs font-bold rounded border bg-slate-50 border-slate-300 text-slate-600 text-center">
+                        ♻️ Recycle Scrap (10+ kg)
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Book Calc Inputs -->
+                  <div id="calc-book-inputs" class="space-y-3">
+                    <div>
+                      <label class="block text-xs font-medium text-slate-600">Original Purchase Price (₹)</label>
+                      <div class="relative mt-1">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 font-bold">₹</span>
+                        <input type="number" id="quick-original-price" value="1000" min="10" step="10" oninput="runQuickBookCalc()" class="w-full pl-8 pr-3 py-1.5 text-sm rounded border border-slate-300 amazon-focus font-semibold" />
+                      </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                      <div>
+                        <label class="block text-xs font-medium text-slate-600">Condition</label>
+                        <select id="quick-condition" onchange="runQuickBookCalc()" class="w-full mt-1 px-2 py-1.5 text-xs rounded border border-slate-300 amazon-focus font-medium">
+                          <option value="Like New">Like New (Max 30%)</option>
+                          <option value="Good">Good (Max 30%)</option>
+                          <option value="Used" selected>Used (Max 20%)</option>
+                          <option value="Old or Damaged">Old / Damaged (Max 15%)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label class="block text-xs font-medium text-slate-600">No. of Copies</label>
+                        <input type="number" id="quick-copies" value="1" min="1" max="100" oninput="runQuickBookCalc()" class="w-full mt-1 px-3 py-1.5 text-xs rounded border border-slate-300 amazon-focus" />
+                      </div>
+                    </div>
+
+                    <!-- Calculated Result -->
+                    <div class="bg-emerald-50 rounded-lg p-3 border border-emerald-200 text-center">
+                      <div class="text-[11px] text-emerald-800 font-medium">Estimated Seller Payment</div>
+                      <div class="text-2xl font-black text-emerald-900 mt-0.5" id="quick-book-result">₹200.00</div>
+                      <div class="text-[10px] text-slate-500 mt-1 italic leading-tight">
+                        *Estimate only, not guaranteed. Max cap enforced by system. Stall inspection required.
+                      </div>
+                    </div>
+
+                    <button onclick="openBookSubmissionModal()" class="w-full bg-shelf-gold hover:bg-shelf-goldhover text-slate-950 font-bold py-2 rounded text-xs transition">
+                      Proceed to Submit Book Request →
+                    </button>
+                  </div>
+
+                  <!-- Recycle Scrap Calc Inputs -->
+                  <div id="calc-raddi-inputs" class="space-y-3 hidden">
+                    <div>
+                      <label class="block text-xs font-medium text-slate-600">Paper Category</label>
+                      <select id="quick-raddi-type" onchange="runQuickRaddiCalc()" class="w-full mt-1 px-2 py-1.5 text-xs rounded border border-slate-300 amazon-focus font-medium">
+                        <option value="Newspapers" data-rate="14">Newspapers (Avg ₹14 - ₹16 / kg)</option>
+                        <option value="Notebooks" data-rate="12">Notebooks / White Paper (Avg ₹12 - ₹14 / kg)</option>
+                        <option value="Cardboard" data-rate="8">Cardboard / Cartons (Avg ₹8 - ₹10 / kg)</option>
+                        <option value="Mixed Paper" data-rate="9">Mixed Waste Paper (Avg ₹9 - ₹11 / kg)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <div class="flex items-center justify-between">
+                        <label class="block text-xs font-medium text-slate-600">Estimated Weight (kg)</label>
+                        <span class="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">Min 10 kg</span>
+                      </div>
+                      <input type="number" id="quick-raddi-weight" value="25" min="1" step="0.5" oninput="runQuickRaddiCalc()" class="w-full mt-1 px-3 py-1.5 text-xs rounded border border-slate-300 amazon-focus font-bold" />
+                    </div>
+
+                    <!-- 10 kg Validation Alert -->
+                    <div id="quick-raddi-warning" class="hidden bg-rose-50 border border-rose-200 text-rose-700 p-2 rounded text-xs flex items-center gap-1.5">
+                      <span>⛔</span> Minimum 10 kg of waste paper is required to submit a request.
+                    </div>
+
+                    <div id="quick-raddi-success-box" class="bg-emerald-50 rounded-lg p-3 border border-emerald-200 text-center">
+                      <div class="text-[11px] text-emerald-800 font-medium">Estimated Recycler Payout</div>
+                      <div class="text-2xl font-black text-emerald-900 mt-0.5" id="quick-raddi-result">₹350.00</div>
+                      <div class="text-[10px] text-slate-500 mt-1 italic leading-tight">
+                        *Owner proposes exact rate per kg. Doorstep weighing conducted at collection.
+                      </div>
+                    </div>
+
+                    <button id="quick-raddi-btn" onclick="openRaddiSubmissionModal()" class="w-full bg-shelf-gold hover:bg-shelf-goldhover text-slate-950 font-bold py-2 rounded text-xs transition">
+                      Proceed to Request Recycle Scrap Pickup →
+                    </button>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- TWO LARGE CATEGORY CARDS (Section 1 & 2 of Prompt) -->
+      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 relative z-20">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          <!-- Card 1: Used Books -->
+          <div class="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden hover:shadow-xl transition-shadow flex flex-col justify-between">
+            <div class="p-6">
+              <div class="flex items-center justify-between mb-3">
+                <span class="inline-flex items-center gap-1 text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-full">
+                  <span>📖</span> Category 1
+                </span>
+                <span class="text-xs text-slate-500 font-semibold">8 Subcategories</span>
+              </div>
+              <h2 class="text-2xl font-extrabold text-slate-900 mb-2">Used Books Marketplace</h2>
+              <p class="text-sm text-slate-600 mb-4 leading-relaxed">
+                Connect with registered used-book stalls. Submit photos of your college textbooks, PUC notes, or storybooks. Get an instant condition-capped valuation, select handover method, and receive direct payment upon inspection.
+              </p>
+
+              <!-- Condition Cap Breakdown Table -->
+              <div class="bg-slate-50 rounded-lg p-3 border border-slate-200 mb-4">
+                <div class="text-xs font-bold text-slate-700 mb-2 flex items-center justify-between">
+                  <span>Maximum Valuation Rules:</span>
+                  <span class="text-[10px] text-slate-500 font-normal">Formula: Price × % × Copies</span>
+                </div>
+                <div class="grid grid-cols-4 gap-1 text-center text-xs">
+                  <div class="bg-white p-1.5 rounded border border-slate-200">
+                    <div class="font-bold text-emerald-700">Like New</div>
+                    <div class="text-[11px] text-slate-600 font-medium">30% max</div>
+                  </div>
+                  <div class="bg-white p-1.5 rounded border border-slate-200">
+                    <div class="font-bold text-emerald-700">Good</div>
+                    <div class="text-[11px] text-slate-600 font-medium">30% max</div>
+                  </div>
+                  <div class="bg-white p-1.5 rounded border border-slate-200">
+                    <div class="font-bold text-emerald-700">Used</div>
+                    <div class="text-[11px] text-slate-600 font-medium">20% max</div>
+                  </div>
+                  <div class="bg-white p-1.5 rounded border border-slate-200">
+                    <div class="font-bold text-emerald-700">Old/Damaged</div>
+                    <div class="text-[11px] text-slate-600 font-medium">15% max</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Subcategories preview -->
+              <div class="flex flex-wrap gap-1.5 mb-2">
+                <span class="text-[11px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded">Engineering</span>
+                <span class="text-[11px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded">Degree / B.Com/B.Sc</span>
+                <span class="text-[11px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded">PUC</span>
+                <span class="text-[11px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded">SSLC 10th</span>
+                <span class="text-[11px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded">Medical / NEET</span>
+                <span class="text-[11px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded">Novels</span>
+              </div>
+            </div>
+
+            <div class="bg-emerald-50/70 p-4 border-t border-slate-200 flex items-center justify-between">
+              <span class="text-xs text-slate-600">Genuine books only. No photocopies.</span>
+              <button onclick="openBookSubmissionModal()" class="bg-shelf-gold hover:bg-shelf-goldhover text-slate-950 font-bold px-4 py-2 rounded text-xs sm:text-sm flex items-center gap-1.5 shadow transition">
+                <span>➕</span> Submit Used Books
+              </button>
+            </div>
+          </div>
+
+          <!-- Card 2: Recycle Scrap (Paper & Cardboard) -->
+          <div class="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden hover:shadow-xl transition-shadow flex flex-col justify-between">
+            <div class="p-6">
+              <div class="flex items-center justify-between mb-3">
+                <span class="inline-flex items-center gap-1 text-xs font-bold text-amber-800 bg-amber-100 px-2.5 py-1 rounded-full">
+                  <span>♻️</span> Category 2
+                </span>
+                <span class="text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded">
+                  ⚠️ Strict Rule: Min 10 kg
+                </span>
+              </div>
+              <h2 class="text-2xl font-extrabold text-slate-900 mb-2">Recycle Scrap (Paper & Cardboard)</h2>
+              <p class="text-sm text-slate-600 mb-4 leading-relaxed">
+                Clear your space and contribute to the green economy. Sell old newspapers, project papers, long books, and cardboard to verified recycle scrap dealers. Privacy guaranteed: your phone and full address are hidden until you accept an offer!
+              </p>
+
+              <!-- Minimum 10 kg Callout Box -->
+              <div class="bg-amber-50 rounded-lg p-3 border border-amber-200 mb-4">
+                <div class="flex items-start gap-2">
+                  <span class="text-xl">⚖️</span>
+                  <div>
+                    <h4 class="text-xs font-bold text-amber-950">Minimum 10 kg Policy</h4>
+                    <p class="text-xs text-amber-900 mt-0.5 leading-snug">
+                      Orders below 10 kg are automatically blocked by frontend & database CHECK constraints. If actual weight measured at pickup is &lt; 10 kg, recycler may revise rate and seller may cancel freely without penalty.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Types of Paper -->
+              <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                <div class="bg-slate-50 p-2 rounded border border-slate-200">
+                  <div class="font-bold text-slate-800">Newspapers</div>
+                  <div class="text-[11px] text-emerald-700 font-semibold">High Value</div>
+                </div>
+                <div class="bg-slate-50 p-2 rounded border border-slate-200">
+                  <div class="font-bold text-slate-800">Notebooks</div>
+                  <div class="text-[11px] text-emerald-700 font-semibold">White Paper</div>
+                </div>
+                <div class="bg-slate-50 p-2 rounded border border-slate-200">
+                  <div class="font-bold text-slate-800">Cardboard</div>
+                  <div class="text-[11px] text-emerald-700 font-semibold">Cartons & Boxes</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-amber-50/70 p-4 border-t border-slate-200 flex items-center justify-between">
+              <span class="text-xs text-slate-600">Doorstep weighing with digital scale.</span>
+              <button onclick="openRaddiSubmissionModal()" class="bg-shelf-forest hover:bg-shelf-emerald text-white font-bold px-4 py-2 rounded text-xs sm:text-sm flex items-center gap-1.5 shadow transition">
+                <span>⚖️</span> Sell Recycle Scrap (10+ kg)
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- HOW IT WORKS SECTION (Amazon/Uber-style 2-Column Visual Lifecycle) -->
+      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="text-center max-w-3xl mx-auto mb-10">
+          <h2 class="text-3xl font-extrabold text-slate-900">How SECOND SHELF Works</h2>
+          <p class="text-sm text-slate-600 mt-2">
+            A transparent marketplace platform. We connect sellers with book stalls and recycle scrap dealers without taking commissions or holding your funds in escrow.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          
+          <!-- Workflow 1: Used Books -->
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <div class="flex items-center gap-2 mb-4 pb-2 border-b border-slate-200">
+              <span class="text-2xl">📚</span>
+              <h3 class="font-bold text-lg text-slate-900">Used Books Lifecycle</h3>
+            </div>
+            <ol class="space-y-4 text-xs sm:text-sm text-slate-700">
+              <li class="flex items-start gap-3">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-xs">1</span>
+                <div>
+                  <strong class="text-slate-900">Submit Books & Photos:</strong> Enter title, author, condition (Like New, Good, Used, Damaged), original price, and 3 photos (front, back, inside).
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-xs">2</span>
+                <div>
+                  <strong class="text-slate-900">Estimated Payout Calculated:</strong> The system applies the admin-configured valuation percentage cap (30%, 20%, 15%).
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-xs">3</span>
+                <div>
+                  <strong class="text-slate-900">Stall Reviews & Sends Offer:</strong> Participating stalls make offers up to the condition cap. Seller accepts preferred stall.
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-xs">4</span>
+                <div>
+                  <strong class="text-slate-900">Handover & Physical Inspection:</strong> Seller hands over at stall or ships. Stall confirms receipt and inspects for missing pages or pirated copies.
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-xs">5</span>
+                <div>
+                  <strong class="text-slate-900">Final Price Confirmation:</strong> If condition matches, price is confirmed. If revised, stall provides written reason for seller approval.
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-amber-100 text-amber-900 font-bold flex items-center justify-center text-xs">6</span>
+                <div>
+                  <strong class="text-amber-900">Direct Payment & Confirmation:</strong> Stall pays seller directly via UPI/Cash and logs the reference. Seller confirms receipt to complete.
+                </div>
+              </li>
+            </ol>
+          </div>
+
+          <!-- Workflow 2: Recycle Scrap -->
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <div class="flex items-center gap-2 mb-4 pb-2 border-b border-slate-200">
+              <span class="text-2xl">♻️</span>
+              <h3 class="font-bold text-lg text-slate-900">Recycle Scrap Lifecycle</h3>
+            </div>
+            <ol class="space-y-4 text-xs sm:text-sm text-slate-700">
+              <li class="flex items-start gap-3">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-xs">1</span>
+                <div>
+                  <strong class="text-slate-900">Submit Request (≥ 10 kg):</strong> Pick paper category, enter estimated weight (must be 10 kg or more), area PIN code, and preferred pickup slot.
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-xs">2</span>
+                <div>
+                  <strong class="text-slate-900">Privacy-First Recycler Feed:</strong> Approved recycle scrap dealers see only the weight, type, and area/PIN code. Personal address & phone stay hidden!
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-xs">3</span>
+                <div>
+                  <strong class="text-slate-900">Dealer Proposes Rate per kg:</strong> Recycle scrap owner quotes a competitive rate/kg based on current market recycling prices.
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-xs">4</span>
+                <div>
+                  <strong class="text-slate-900">Seller Accepts Offer:</strong> Exact address and phone are unlocked for that specific dealer to coordinate doorstep pickup.
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-xs">5</span>
+                <div>
+                  <strong class="text-slate-900">Doorstep Weighing & Inspection:</strong> Paper is weighed on electronic scale. Actual weight and total amount confirmed.
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-amber-100 text-amber-900 font-bold flex items-center justify-center text-xs">6</span>
+                <div>
+                  <strong class="text-amber-900">Two-Party Payment Confirmation:</strong> Dealer transfers via UPI/Cash and records reference. Seller confirms receipt to mark Completed.
+                </div>
+              </li>
+            </ol>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- POPULAR BOOK CATEGORIES & DEMO LISTINGS (Section 2 of Prompt) -->
+      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="text-2xl font-extrabold text-slate-900">Popular Book Categories</h2>
+            <p class="text-xs text-slate-500">Real listings and sample requests. Verified genuine textbooks only.</p>
+          </div>
+          <span class="badge-demo">Demo Listings Preview</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="demo-book-listings">
+          <!-- Rendered dynamically by JS -->
+        </div>
+      </section>
+
+      <!-- BENEFITS OF SELLING THROUGH SECOND SHELF (Section 2 of Prompt) -->
+      <section class="bg-emerald-950 text-white py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+          <div class="text-center max-w-2xl mx-auto mb-8">
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Why Sell Through SECOND SHELF?</h2>
+            <p class="text-emerald-200 text-xs sm:text-sm mt-1">Built specifically for students, book lovers, and eco-conscious citizens in India.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <div class="bg-emerald-900/60 p-5 rounded-xl border border-emerald-800">
+              <div class="w-10 h-10 rounded-lg bg-emerald-800 text-amber-400 flex items-center justify-center text-xl mb-3">
+                ⚖️
+              </div>
+              <h3 class="font-bold text-base text-white mb-1">Fair, Rule-Based Valuation</h3>
+              <p class="text-xs text-emerald-200 leading-relaxed">
+                No arbitrary lowballing. Maximum payouts are pegged to book condition (up to 30% for Like New) and regulated by transparent admin rules.
+              </p>
+            </div>
+
+            <div class="bg-emerald-900/60 p-5 rounded-xl border border-emerald-800">
+              <div class="w-10 h-10 rounded-lg bg-emerald-800 text-amber-400 flex items-center justify-center text-xl mb-3">
+                🔒
+              </div>
+              <h3 class="font-bold text-base text-white mb-1">DPDP 2023 Privacy Protection</h3>
+              <p class="text-xs text-emerald-200 leading-relaxed">
+                Recycle scrap dealers cannot see your full address or phone number until you accept their bid. Your personal data is protected under India's DPDP Act.
+              </p>
+            </div>
+
+            <div class="bg-emerald-900/60 p-5 rounded-xl border border-emerald-800">
+              <div class="w-10 h-10 rounded-lg bg-emerald-800 text-amber-400 flex items-center justify-center text-xl mb-3">
+                🤝
+              </div>
+              <h3 class="font-bold text-base text-white mb-1">Two-Party Payment Confirmation</h3>
+              <p class="text-xs text-emerald-200 leading-relaxed">
+                No middleman escrow fees. Buyer pays directly via UPI/Cash and enters UTR. The order is only marked Complete when the seller verifies receipt.
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- TESTIMONIALS SECTION (Demo labeled) -->
+      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="text-2xl font-extrabold text-slate-900">What Our Community Says</h2>
+            <p class="text-xs text-slate-500">Student sellers, stall owners, and recycling partners.</p>
+          </div>
+          <span class="badge-demo">Demo Testimonials</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+            <div class="flex items-center gap-1 text-amber-400 text-sm mb-2">★★★★★</div>
+            <p class="text-xs text-slate-600 italic leading-relaxed mb-4">
+              "Sold all my 4th semester VTU engineering books in one batch to Vidyarthi Books on Avenue Road. Got ₹780 transferred via UPI right after inspection. Super smooth!"
+            </p>
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-xs">PS</div>
+              <div>
+                <h4 class="font-bold text-xs text-slate-900">Priya Sharma</h4>
+                <p class="text-[10px] text-slate-500">CSE Student, RVCE Bengaluru</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+            <div class="flex items-center gap-1 text-amber-400 text-sm mb-2">★★★★★</div>
+            <p class="text-xs text-slate-600 italic leading-relaxed mb-4">
+              "We had 35 kg of old newspapers and college exam booklets at home. Karnataka Eco Recyclers came with a digital scale, weighed everything, and paid ₹490 on the spot."
+            </p>
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-800 font-bold flex items-center justify-center text-xs">RK</div>
+              <div>
+                <h4 class="font-bold text-xs text-slate-900">Ramesh Kumar</h4>
+                <p class="text-[10px] text-slate-500">Resident, Basaveshwaranagar</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+            <div class="flex items-center gap-1 text-amber-400 text-sm mb-2">★★★★★</div>
+            <p class="text-xs text-slate-600 italic leading-relaxed mb-4">
+              "As a book stall owner, SECOND SHELF gives us genuine student textbooks without the hassle. The condition photographs allow us to quote accurately before students travel."
+            </p>
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-800 font-bold flex items-center justify-center text-xs">RG</div>
+              <div>
+                <h4 class="font-bold text-xs text-slate-900">Rajesh Gowda</h4>
+                <p class="text-[10px] text-slate-500">Owner, Vidyarthi Book House (Avenue Rd)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- SECTION: ROLE DASHBOARDS (Loaded dynamically based on active role) -->
+    <div id="section-dashboard" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 hidden">
+      <!-- Dynamic role dashboard container -->
+      <div id="dashboard-content"></div>
+    </div>
+
+    <!-- SECTION: USED BOOKS BROWSER PAGE -->
+    <div id="section-used-books-page" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 hidden">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 class="text-2xl font-extrabold text-slate-900">Used Books Directory</h1>
+            <p class="text-xs text-slate-600 mt-1">Browse active book requests, categories, and registered book stalls.</p>
+          </div>
+          <button onclick="openBookSubmissionModal()" class="bg-shelf-gold hover:bg-shelf-goldhover text-slate-950 font-bold px-4 py-2 rounded text-xs sm:text-sm flex items-center gap-1.5 shadow">
+            <span>➕</span> Submit Your Used Books
+          </button>
+        </div>
+
+        <!-- Filter bar -->
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 mt-6 pt-4 border-t border-slate-100">
+          <div>
+            <label class="text-[11px] font-semibold text-slate-600">Filter by Subcategory</label>
+            <select id="book-filter-cat" onchange="renderBookDirectory()" class="w-full mt-1 p-2 text-xs border rounded amazon-focus">
+              <option value="all">All Subcategories</option>
+              <option value="Engineering Books">Engineering Books</option>
+              <option value="Degree Books">Degree Books</option>
+              <option value="PUC Books">PUC Books</option>
+              <option value="Class 10th / SSLC Books">Class 10th / SSLC Books</option>
+              <option value="Medical and Competitive Exam Books">Medical & Competitive Exam</option>
+              <option value="Story Books and Novels">Story Books & Novels</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[11px] font-semibold text-slate-600">Condition</label>
+            <select id="book-filter-cond" onchange="renderBookDirectory()" class="w-full mt-1 p-2 text-xs border rounded amazon-focus">
+              <option value="all">All Conditions</option>
+              <option value="Like New">Like New (30%)</option>
+              <option value="Good">Good (30%)</option>
+              <option value="Used">Used (20%)</option>
+              <option value="Old or Damaged">Old or Damaged (15%)</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[11px] font-semibold text-slate-600">Handover Method</label>
+            <select id="book-filter-handover" onchange="renderBookDirectory()" class="w-full mt-1 p-2 text-xs border rounded amazon-focus">
+              <option value="all">All Methods</option>
+              <option value="direct_stall_handover">Stall Counter Handover</option>
+              <option value="arranged_pickup">Arranged Pickup</option>
+              <option value="parcel_postal">Postal / Courier</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[11px] font-semibold text-slate-600">Status</label>
+            <select id="book-filter-status" onchange="renderBookDirectory()" class="w-full mt-1 p-2 text-xs border rounded amazon-focus">
+              <option value="all">All Statuses</option>
+              <option value="Pending">Pending Stall Review</option>
+              <option value="Offer Received">Offer Received</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="book-directory-cards">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+
+    <!-- SECTION: RECYCLE SCRAP PAGE -->
+    <div id="section-raddi-page" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 hidden">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-2xl font-extrabold text-slate-900">Recycle Scrap Collection (Min 10 kg)</h1>
+              <span class="text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded">Min 10 kg</span>
+            </div>
+            <p class="text-xs text-slate-600 mt-1">Connect with verified paper recycling dealers in your area. Doorstep pickup with digital weight verification.</p>
+          </div>
+          <button onclick="openRaddiSubmissionModal()" class="bg-shelf-forest hover:bg-shelf-emerald text-white font-bold px-4 py-2 rounded text-xs sm:text-sm flex items-center gap-1.5 shadow">
+            <span>⚖️</span> Request Recycle Scrap Pickup (≥ 10 kg)
+          </button>
+        </div>
+
+        <!-- 10 kg rule info alert -->
+        <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-900 flex items-center justify-between">
+          <span><strong>Notice:</strong> Recyclers service requests of 10 kg and above only. Below 10 kg is blocked on frontend and backend database constraints.</span>
+          <button onclick="openPolicyModal('cancellation-policy')" class="text-amber-800 underline font-semibold ml-2">Read Weight Policy</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="raddi-directory-cards">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ==================================================================== -->
+  <!-- FOOTER (All required legal, payment, & policy links from Section 2)   -->
+  <!-- ==================================================================== -->
+  <footer class="bg-shelf-dark text-slate-300 text-xs border-t border-emerald-950 mt-auto">
+    <div class="bg-emerald-950/80 py-4 border-b border-emerald-900 text-center">
+      <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="text-emerald-300 hover:text-white font-semibold text-xs flex items-center justify-center gap-1 mx-auto">
+        <span>▲</span> Back to top
+      </button>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+        
+        <!-- Col 1: About SECOND SHELF -->
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">📚</span>
+            <span class="text-white font-black text-sm tracking-wider">SECOND SHELF</span>
+          </div>
+          <p class="text-slate-400 text-[11px] leading-relaxed">
+            "Give Your Old Books a Second Life." A college-born marketplace empowering students and citizens to monetize textbooks and recycle waste paper responsibly.
+          </p>
+          <div class="text-[11px] text-amber-300 font-semibold">
+            Bengaluru • Mysuru • Hubballi • Mangaluru
+          </div>
+        </div>
+
+        <!-- Col 2: Categories -->
+        <div class="space-y-2">
+          <h4 class="text-white font-bold text-xs uppercase tracking-wider">Categories</h4>
+          <ul class="space-y-1.5 text-slate-400 text-[11px]">
+            <li><a href="#" onclick="showSection('used-books-page')" class="hover:text-amber-300">Engineering Books</a></li>
+            <li><a href="#" onclick="showSection('used-books-page')" class="hover:text-amber-300">Degree & College Textbooks</a></li>
+            <li><a href="#" onclick="showSection('used-books-page')" class="hover:text-amber-300">PUC & 10th SSLC Books</a></li>
+            <li><a href="#" onclick="showSection('used-books-page')" class="hover:text-amber-300">Medical / Competitive Exams</a></li>
+            <li><a href="#" onclick="showSection('raddi-page')" class="hover:text-amber-300">Newspaper Recycling (10+ kg)</a></li>
+            <li><a href="#" onclick="showSection('raddi-page')" class="hover:text-amber-300">Notebooks & Cardboard Scrap (10+ kg)</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 3: Policies & Security (Mandatory Section 2 & 10) -->
+        <div class="space-y-2">
+          <h4 class="text-white font-bold text-xs uppercase tracking-wider">Platform Policies</h4>
+          <ul class="space-y-1.5 text-slate-400 text-[11px]">
+            <li><button onclick="openPolicyModal('dpdp-privacy')" class="hover:text-amber-300 text-left">DPDP Act 2023 Privacy Policy</button></li>
+            <li><button onclick="openPolicyModal('two-party-payment')" class="hover:text-amber-300 text-left">Payment & Settlement Policy</button></li>
+            <li><button onclick="openPolicyModal('shipping-policy')" class="hover:text-amber-300 text-left">Shipping & Handover Terms</button></li>
+            <li><button onclick="openPolicyModal('cancellation-policy')" class="hover:text-amber-300 text-left">Cancellation & Weight Policy</button></li>
+            <li><button onclick="openPolicyModal('dispute-policy')" class="hover:text-amber-300 text-left">Dispute Resolution Process</button></li>
+            <li><button onclick="openPolicyModal('terms-policy')" class="hover:text-amber-300 text-left">Terms & Conditions</button></li>
+          </ul>
+        </div>
+
+        <!-- Col 4: Contact & Help -->
+        <div class="space-y-2">
+          <h4 class="text-white font-bold text-xs uppercase tracking-wider">Help & Connect</h4>
+          <ul class="space-y-1.5 text-slate-400 text-[11px]">
+            <li class="flex items-center gap-1.5 text-slate-300">
+              <span>📧</span> support@secondshelf.in
+            </li>
+            <li class="flex items-center gap-1.5 text-slate-300">
+              <span>📞</span> +91 80 2660 0110 (Mon-Sat, 10 AM - 6 PM)
+            </li>
+            <li class="flex items-center gap-1.5 text-slate-300">
+              <span>🏢</span> Karnataka Innovation Hub, Bengaluru
+            </li>
+            <li class="pt-2">
+              <button onclick="openDisputeModal()" class="bg-rose-900/60 hover:bg-rose-800 text-rose-200 border border-rose-700/60 px-2.5 py-1 rounded text-[11px] font-semibold transition">
+                ⚠️ Raise a Transaction Dispute
+              </button>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="border-t border-slate-800 pt-6 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-400 gap-3">
+        <div>
+          © 2026 SECOND SHELF. All rights reserved. Built with pride for Indian students and waste-paper recycling networks.
+        </div>
+        <div class="flex items-center gap-3 flex-wrap">
+          <span class="text-emerald-400">● Marketplace Only (No Escrow / No Direct In-App Payments)</span>
+          <span class="text-slate-600">|</span>
+          <button onclick="openLoginPortal('seller')" class="text-slate-300 hover:text-amber-300">User Login</button>
+          <span class="text-slate-600">•</span>
+          <button onclick="openLoginPortal('book_stall')" class="text-slate-300 hover:text-amber-300">Stall Login</button>
+          <span class="text-slate-600">•</span>
+          <button onclick="openLoginPortal('raddi_owner')" class="text-slate-300 hover:text-amber-300">Recycle Scrap Login</button>
+          <span class="text-slate-600">|</span>
+          <button onclick="openLoginPortal('admin')" class="text-rose-400 hover:text-rose-200 font-bold flex items-center gap-1 transition" title="Restricted to Website Creator Only">
+            <span>🔐</span> Admin Portal
+          </button>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==================================================================== -->
+  <!-- MODAL: USED BOOK SUBMISSION (Multi-item support, condition calc)     -->
+  <!-- ==================================================================== -->
+  <div id="modal-book-submission" class="fixed inset-0 z-50 modal-backdrop hidden overflow-y-auto p-4 flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full p-6 text-slate-900 border border-slate-200 max-h-[90vh] flex flex-col">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 flex-shrink-0">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">📚</span>
+          <div>
+            <h3 class="text-lg font-bold text-slate-900">Submit Used Books for Stall Valuation</h3>
+            <p class="text-xs text-slate-500">Multi-item support enabled. System enforces maximum condition payout caps.</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modal-book-submission')" class="text-slate-400 hover:text-slate-700 text-2xl font-bold">&times;</button>
+      </div>
+
+      <!-- Scrollable Form Body -->
+      <form id="form-submit-book" onsubmit="handleBookSubmit(event)" class="overflow-y-auto py-4 space-y-6 flex-1 pr-1">
+        
+        <!-- Authenticity Affirmation (Prompt Requirement Section 3) -->
+        <div class="bg-emerald-50 border border-emerald-300 rounded-lg p-3 text-xs text-emerald-900 flex items-start gap-2">
+          <input type="checkbox" id="book-auth-check" required class="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer" />
+          <label for="book-auth-check" class="cursor-pointer">
+            <strong>Genuine Books Declaration:</strong> I confirm these are genuine, complete books with no missing pages. I understand that photocopies, pirated prints, and severely defaced editions will be rejected by book stalls upon physical inspection.
+          </label>
+        </div>
+
+        <!-- Book Items Container (Multi-item support) -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h4 class="text-sm font-bold text-slate-800">Book Details</h4>
+            <button type="button" onclick="addAnotherBookItem()" class="text-xs text-emerald-700 hover:text-emerald-900 font-bold flex items-center gap-1 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-300">
+              <span>➕</span> Add Another Book to Request
+            </button>
+          </div>
+
+          <div id="book-items-list" class="space-y-4">
+            <!-- First book item template -->
+            <div class="book-item-card bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 relative">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-700 item-index-badge">Book #1</span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Book Title *</label>
+                  <input type="text" required name="item_title" placeholder="e.g. Higher Engineering Mathematics" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus" />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Author Name *</label>
+                  <input type="text" required name="item_author" placeholder="e.g. B.S. Grewal" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Category & Semester *</label>
+                  <select name="item_category" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus">
+                    <option value="Engineering Books">Engineering Books</option>
+                    <option value="Degree Books">Degree Books (B.Com/B.Sc/B.A)</option>
+                    <option value="PUC Books">PUC Books</option>
+                    <option value="Class 10th / SSLC Books">Class 10th / SSLC</option>
+                    <option value="Medical and Competitive Exam Books">Medical & Competitive Exam</option>
+                    <option value="Story Books and Novels">Story Books & Novels</option>
+                    <option value="Other Educational Books">Other Educational</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Publisher & Edition</label>
+                  <input type="text" name="item_edition" placeholder="e.g. Khanna Pub, 44th Edition" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus" />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">ISBN (Optional)</label>
+                  <input type="text" name="item_isbn" placeholder="e.g. 978-8174091955" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Original Purchase Price (₹) *</label>
+                  <input type="number" required min="1" step="1" name="item_price" value="650" oninput="calculateModalBookTotal()" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus font-bold" />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Condition *</label>
+                  <select name="item_condition" onchange="calculateModalBookTotal()" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus font-medium">
+                    <option value="Like New">Like New (Max 30%)</option>
+                    <option value="Good" selected>Good (Max 30%)</option>
+                    <option value="Used">Used (Max 20%)</option>
+                    <option value="Old or Damaged">Old or Damaged (Max 15%)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Number of Copies *</label>
+                  <input type="number" required min="1" max="50" name="item_copies" value="1" oninput="calculateModalBookTotal()" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus" />
+                </div>
+              </div>
+
+              <!-- Photo Upload Zones (3 required photos) -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">
+                  Book Photographs * (Minimum 3 required: Front Cover, Back Cover, and 1 Inside Page)
+                </label>
+                <div class="grid grid-cols-3 gap-2">
+                  <div class="border-2 border-dashed border-slate-300 rounded-lg p-2 text-center bg-white hover:border-emerald-500 cursor-pointer transition">
+                    <div class="text-sm">📸</div>
+                    <div class="text-[10px] font-bold text-slate-700">Front Cover</div>
+                    <input type="file" accept="image/*" class="text-[9px] w-full mt-1 text-slate-500" />
+                  </div>
+                  <div class="border-2 border-dashed border-slate-300 rounded-lg p-2 text-center bg-white hover:border-emerald-500 cursor-pointer transition">
+                    <div class="text-sm">📸</div>
+                    <div class="text-[10px] font-bold text-slate-700">Back Cover</div>
+                    <input type="file" accept="image/*" class="text-[9px] w-full mt-1 text-slate-500" />
+                  </div>
+                  <div class="border-2 border-dashed border-slate-300 rounded-lg p-2 text-center bg-white hover:border-emerald-500 cursor-pointer transition">
+                    <div class="text-sm">📄</div>
+                    <div class="text-[10px] font-bold text-slate-700">Inside Page</div>
+                    <input type="file" accept="image/*" class="text-[9px] w-full mt-1 text-slate-500" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Single item estimated payout badge -->
+              <div class="text-right text-[11px] font-semibold text-emerald-800 item-estimated-subtotal">
+                Estimated Item Payout: ₹195.00 (Estimate only, subject to inspection)
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Handover & Logistics (Section 3 of Prompt) -->
+        <div class="space-y-3 pt-2 border-t border-slate-200">
+          <h4 class="text-sm font-bold text-slate-800">Preferred Handover Method</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <label class="border rounded-lg p-2.5 text-xs flex items-start gap-2 cursor-pointer bg-white hover:border-emerald-600">
+              <input type="radio" name="handover_method" value="direct_stall_handover" checked class="mt-0.5 text-emerald-600" />
+              <div>
+                <strong class="block text-slate-900">Direct Stall Handover</strong>
+                <span class="text-[11px] text-slate-500">Hand over in person at stall counter. Free.</span>
+              </div>
+            </label>
+            <label class="border rounded-lg p-2.5 text-xs flex items-start gap-2 cursor-pointer bg-white hover:border-emerald-600">
+              <input type="radio" name="handover_method" value="arranged_pickup" class="mt-0.5 text-emerald-600" />
+              <div>
+                <strong class="block text-slate-900">Arranged Pickup</strong>
+                <span class="text-[11px] text-slate-500">If participating stall offers doorstep pickup.</span>
+              </div>
+            </label>
+            <label class="border rounded-lg p-2.5 text-xs flex items-start gap-2 cursor-pointer bg-white hover:border-emerald-600">
+              <input type="radio" name="handover_method" value="parcel_postal" class="mt-0.5 text-emerald-600" />
+              <div>
+                <strong class="block text-slate-900">Parcel / Postal Courier</strong>
+                <span class="text-[11px] text-slate-500">Default: seller pays shipping unless stall agrees.</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Seller Contact & Address Details -->
+        <div class="space-y-3 pt-2 border-t border-slate-200">
+          <h4 class="text-sm font-bold text-slate-800">Seller Contact & Address</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Your Full Name *</label>
+              <input type="text" id="book-seller-name" required value="Priya Sharma" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Verified Email *</label>
+              <input type="email" id="book-seller-email" required value="priya.sharma@gmail.com" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Phone Number (with OTP) *</label>
+              <input type="tel" id="book-seller-phone" required value="+91 98451 12345" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Submission / Pickup Address *</label>
+              <input type="text" id="book-seller-address" required value="#24, 7th Cross, Jayanagar 4th Block" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">6-Digit PIN Code *</label>
+              <input type="text" id="book-seller-pin" required maxlength="6" pattern="[0-9]{6}" value="560041" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Total Estimated Payout Summary Banner -->
+        <div class="bg-emerald-50 rounded-xl p-4 border border-emerald-300 flex items-center justify-between">
+          <div>
+            <div class="text-xs text-emerald-800 font-bold uppercase tracking-wider">Total Request Estimated Payout</div>
+            <div class="text-2xl font-black text-emerald-950" id="modal-book-grand-total">₹195.00</div>
+            <div class="text-[10px] text-slate-600 italic">
+              *Calculated using admin valuation rules. A stall's offer may be lower but cannot exceed this cap.
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="closeModal('modal-book-submission')" class="px-4 py-2 border rounded-md text-xs font-semibold text-slate-700 hover:bg-slate-100">
+              Cancel
+            </button>
+            <button type="submit" class="bg-shelf-gold hover:bg-shelf-goldhover text-slate-950 font-bold px-6 py-2 rounded-md shadow text-xs transition">
+              Submit Request to Stalls →
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- MODAL: RECYCLE SCRAP SUBMISSION (Strict 10 kg minimum requirement)           -->
+  <!-- ==================================================================== -->
+  <div id="modal-raddi-submission" class="fixed inset-0 z-50 modal-backdrop hidden overflow-y-auto p-4 flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 text-slate-900 border border-slate-200 max-h-[90vh] flex flex-col">
+      
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 flex-shrink-0">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">♻️</span>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-lg font-bold text-slate-900">Request Recycle Scrap Pickup</h3>
+              <span class="text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded">Min 10 kg</span>
+            </div>
+            <p class="text-xs text-slate-500">Verified recycle scrap dealers quote rate per kg. Doorstep collection with digital scale.</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modal-raddi-submission')" class="text-slate-400 hover:text-slate-700 text-2xl font-bold">&times;</button>
+      </div>
+
+      <form id="form-submit-raddi" onsubmit="handleRaddiSubmit(event)" class="overflow-y-auto py-4 space-y-5 flex-1 pr-1">
+        
+        <!-- Strict Minimum 10 kg Rule Banner -->
+        <div class="bg-amber-50 border border-amber-300 rounded-lg p-3 text-xs text-amber-900">
+          <div class="font-bold flex items-center gap-1">
+            <span>⚖️</span> Minimum Accepted Quantity is 10 kg
+          </div>
+          <p class="mt-0.5 text-[11px] leading-relaxed">
+            Requests below 10 kg are rejected by our frontend and database check constraints. If the actual weight at doorstep collection is under 10 kg, the recycle scrap owner may decline or revise the offer, and you may cancel without penalty.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Waste Paper Type *</label>
+            <select id="raddi-paper-type" required class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus font-medium">
+              <option value="Newspapers">Newspapers (High market demand)</option>
+              <option value="Notebooks">Notebooks / White Paper</option>
+              <option value="Old Papers">Old Office Papers & Records</option>
+              <option value="Magazines">Magazines & Glossy Paper</option>
+              <option value="Cardboard">Cardboard / Packaging Cartons</option>
+              <option value="Mixed Paper">Mixed Waste Paper</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">
+              Estimated Weight (kg) * <span class="text-rose-600 font-bold">(≥ 10 kg)</span>
+            </label>
+            <input 
+              type="number" 
+              id="raddi-weight-input" 
+              required 
+              min="10" 
+              step="0.5" 
+              value="20" 
+              oninput="validateRaddiWeight(this)" 
+              class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus font-bold" 
+            />
+            <div id="raddi-weight-error" class="hidden text-[11px] text-rose-600 font-bold mt-1">
+              ⛔ Minimum 10 kg of recycle scrap is required to submit a request.
+            </div>
+          </div>
+        </div>
+
+        <!-- Photographs -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Photographs of Waste Paper</label>
+          <div class="border-2 border-dashed border-slate-300 rounded-lg p-3 text-center bg-slate-50 hover:bg-slate-100 cursor-pointer">
+            <span class="text-xl">📷</span>
+            <div class="text-xs font-bold text-slate-700">Upload Photos of Paper Bundles</div>
+            <div class="text-[10px] text-slate-500">Shows recyclers the storage condition and paper purity (JPG, PNG)</div>
+            <input type="file" accept="image/*" class="text-xs mt-2 text-slate-600" />
+          </div>
+        </div>
+
+        <!-- Privacy Assurance Notice (Section 4 of Prompt) -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-900 flex items-start gap-2">
+          <span class="text-base">🛡️</span>
+          <div>
+            <strong>Privacy Guarantee:</strong> Recyclers browsing the request feed will ONLY see your general Area and PIN Code. Your exact address and phone number are hidden until you choose to accept a specific dealer's rate offer.
+          </div>
+        </div>
+
+        <!-- Address & Scheduling -->
+        <div class="space-y-3 pt-2 border-t border-slate-200">
+          <h4 class="text-sm font-bold text-slate-800">Pickup Location & Preferred Schedule</h4>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Your Full Name *</label>
+              <input type="text" id="raddi-seller-name" required value="Priya Sharma" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Phone Number (Verified) *</label>
+              <input type="tel" id="raddi-seller-phone" required value="+91 98451 12345" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Full Pickup Address *</label>
+              <input type="text" id="raddi-pickup-address" required value="#24, 7th Cross, Jayanagar 4th Block" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">6-Digit PIN Code *</label>
+              <input type="text" id="raddi-pickup-pin" required maxlength="6" pattern="[0-9]{6}" value="560041" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Preferred Pickup Date *</label>
+              <input type="date" id="raddi-pickup-date" required class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Preferred Time Slot *</label>
+              <select id="raddi-time-slot" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus">
+                <option value="Morning (9 AM - 12 PM)">Morning (9:00 AM - 12:00 PM)</option>
+                <option value="Afternoon (12 PM - 3 PM)">Afternoon (12:00 PM - 3:00 PM)</option>
+                <option value="Evening (3 PM - 6 PM)">Evening (3:00 PM - 6:00 PM)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Optional Notes for Recycler</label>
+            <input type="text" id="raddi-notes" placeholder="e.g. Bundled with twine; lift available on 2nd floor" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus" />
+          </div>
+        </div>
+
+        <div class="pt-4 flex items-center justify-end gap-2 border-t border-slate-200">
+          <button type="button" onclick="closeModal('modal-raddi-submission')" class="px-4 py-2 border rounded-md text-xs font-semibold text-slate-700 hover:bg-slate-100">
+            Cancel
+          </button>
+          <button type="submit" id="submit-raddi-btn" class="bg-shelf-gold hover:bg-shelf-goldhover text-slate-950 font-bold px-6 py-2 rounded-md shadow text-xs transition">
+            Publish Recycle Scrap Request (≥ 10 kg) →
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- MODAL: TWO-PARTY PAYMENT CONFIRMATION (Section 10 of Prompt)         -->
+  <!-- ==================================================================== -->
+  <div id="modal-payment-confirm" class="fixed inset-0 z-50 modal-backdrop hidden overflow-y-auto p-4 flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 text-slate-900 border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🤝</span>
+          <h3 class="text-lg font-bold text-slate-900">Confirm Payment Received</h3>
+        </div>
+        <button onclick="closeModal('modal-payment-confirm')" class="text-slate-400 hover:text-slate-700 text-2xl font-bold">&times;</button>
+      </div>
+
+      <div class="py-4 space-y-4">
+        <div class="bg-amber-50 border border-amber-200 p-3 rounded-lg text-xs text-amber-900">
+          <strong>Two-Party Confirmation Rule:</strong> The payer has recorded this direct payment. The order will be marked <strong>Completed</strong> only when you confirm that the funds have reached your account or cash was received in hand.
+        </div>
+
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 text-xs">
+          <div class="flex justify-between">
+            <span class="text-slate-500">Transaction ID:</span>
+            <span class="font-bold text-slate-800" id="pay-confirm-id">TXN-BOK-001</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">Amount Paid:</span>
+            <span class="font-black text-emerald-800 text-base" id="pay-confirm-amount">₹395.00</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">Payment Mode:</span>
+            <span class="font-bold uppercase text-slate-800" id="pay-confirm-mode">UPI (Google Pay)</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">Bank / UPI Reference (UTR):</span>
+            <span class="font-mono font-bold text-slate-800" id="pay-confirm-utr">UPI/261025884920/GPay</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">Payment Date:</span>
+            <span class="text-slate-800" id="pay-confirm-date">Today</span>
+          </div>
+          <div class="flex justify-between border-t pt-2">
+            <span class="text-slate-500">Payer Notes:</span>
+            <span class="text-slate-700 italic" id="pay-confirm-notes">Inspected and verified condition.</span>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-2 text-xs text-slate-700">
+          <input type="checkbox" id="seller-payment-verify-check" required class="mt-0.5 rounded text-emerald-600 cursor-pointer" />
+          <label for="seller-payment-verify-check" class="cursor-pointer">
+            I verify that I have checked my bank account / UPI app / cash in hand, and I have successfully received the exact amount of <span class="font-bold text-slate-900" id="pay-confirm-check-amount">₹395.00</span>.
+          </label>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-200 flex items-center justify-between">
+        <button onclick="openDisputeModal()" class="text-rose-700 hover:text-rose-900 text-xs font-semibold underline">
+          Not received? Report Dispute
+        </button>
+        <div class="flex items-center gap-2">
+          <button onclick="closeModal('modal-payment-confirm')" class="px-3 py-1.5 border rounded text-xs font-semibold text-slate-700 hover:bg-slate-100">
+            Cancel
+          </button>
+          <button onclick="executePaymentConfirmation()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded text-xs shadow transition">
+            Confirm & Complete Order ✅
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- MODAL: RECORD PAYMENT (By Book Stall or Recycle Scrap Owner)                  -->
+  <!-- ==================================================================== -->
+  <div id="modal-record-payment" class="fixed inset-0 z-50 modal-backdrop hidden overflow-y-auto p-4 flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-slate-900 border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">💳</span>
+          <h3 class="text-lg font-bold text-slate-900">Record Direct Payment</h3>
+        </div>
+        <button onclick="closeModal('modal-record-payment')" class="text-slate-400 hover:text-slate-700 text-2xl font-bold">&times;</button>
+      </div>
+
+      <form id="form-record-payment" onsubmit="handleRecordPaymentSubmit(event)" class="py-4 space-y-4">
+        <input type="hidden" id="record-pay-req-id" />
+        <input type="hidden" id="record-pay-type" />
+
+        <div class="bg-emerald-50 border border-emerald-200 p-2.5 rounded text-xs text-emerald-900">
+          The platform does not process payments. Settle directly with the seller via Cash, UPI, or Bank Transfer, then log the reference details below.
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Amount Paid (₹) *</label>
+          <input type="number" id="record-pay-amount" required min="1" step="0.5" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus font-bold" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Payment Method *</label>
+          <select id="record-pay-method" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus font-medium">
+            <option value="upi">UPI (GPay / PhonePe / Paytm / BHIM)</option>
+            <option value="cash">Cash in Hand (Counter / Doorstep)</option>
+            <option value="bank_transfer">Direct Bank Transfer (IMPS / NEFT)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Payment Reference / UTR Number *</label>
+          <input type="text" id="record-pay-utr" required placeholder="e.g. UPI Ref / Receipt No / 'Cash Handover'" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Payment Notes / Remarks</label>
+          <input type="text" id="record-pay-notes" placeholder="e.g. Paid in full upon condition inspection" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus" />
+        </div>
+
+        <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
+          <button type="button" onclick="closeModal('modal-record-payment')" class="px-3 py-1.5 border rounded text-xs font-semibold text-slate-700 hover:bg-slate-100">
+            Cancel
+          </button>
+          <button type="submit" class="bg-shelf-gold hover:bg-shelf-goldhover text-slate-950 font-bold px-4 py-2 rounded text-xs shadow transition">
+            Save Payment Record →
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- MODAL: SEND / REVISE OFFER (With Condition Cap Enforcement)          -->
+  <!-- ==================================================================== -->
+  <div id="modal-send-offer" class="fixed inset-0 z-50 modal-backdrop hidden overflow-y-auto p-4 flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-slate-900 border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🏷️</span>
+          <h3 class="text-lg font-bold text-slate-900" id="send-offer-modal-title">Make Offer to Seller</h3>
+        </div>
+        <button onclick="closeModal('modal-send-offer')" class="text-slate-400 hover:text-slate-700 text-2xl font-bold">&times;</button>
+      </div>
+
+      <form id="form-send-offer" onsubmit="handleSendOfferSubmit(event)" class="py-4 space-y-4">
+        <input type="hidden" id="offer-target-req-id" />
+        <input type="hidden" id="offer-target-type" />
+        <input type="hidden" id="offer-max-cap" />
+
+        <div id="offer-cap-banner" class="bg-amber-50 border border-amber-200 p-2.5 rounded text-xs text-amber-900">
+          <span class="font-bold">Valuation Limit:</span> Your offer cannot exceed the condition percentage limit of <span class="font-black text-slate-900" id="offer-max-cap-display">₹300.00</span>.
+        </div>
+
+        <div id="offer-rate-field" class="hidden">
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Offered Rate per kg (₹/kg) *</label>
+          <input type="number" id="offer-rate-kg" min="1" step="0.5" value="14" oninput="recalcRaddiOfferTotal()" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus font-bold" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Total Offered Amount (₹) *</label>
+          <input type="number" id="offer-amount-input" required min="1" step="1" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus font-black text-emerald-800 text-base" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Reason / Condition Notes (Mandatory if revised offer)</label>
+          <textarea id="offer-reason" rows="2" placeholder="e.g. Standard 2nd edition valuation; excellent condition verified from cover photo." class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus"></textarea>
+        </div>
+
+        <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
+          <button type="button" onclick="closeModal('modal-send-offer')" class="px-3 py-1.5 border rounded text-xs font-semibold text-slate-700 hover:bg-slate-100">
+            Cancel
+          </button>
+          <button type="submit" class="bg-shelf-gold hover:bg-shelf-goldhover text-slate-950 font-bold px-4 py-2 rounded text-xs shadow transition">
+            Dispatch Offer to Seller →
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- MODAL: DEDICATED MULTI-PORTAL AUTHENTICATION                          -->
+  <!-- Separate logins for User, Book Stall, Recycle Scrap Owner, and Web Creator    -->
+  <!-- ==================================================================== -->
+  <div id="modal-auth" class="fixed inset-0 z-50 modal-backdrop hidden overflow-y-auto p-4 flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full p-6 text-slate-900 border border-slate-200 max-h-[92vh] flex flex-col">
+      
+      <!-- Modal Top Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 flex-shrink-0">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded bg-emerald-900 border border-amber-400 flex items-center justify-center text-amber-400 text-sm font-black">
+            🔑
+          </div>
+          <div>
+            <h3 class="text-base font-extrabold text-slate-900" id="portal-modal-title">Dedicated Access Portals</h3>
+            <p class="text-[11px] text-slate-500">Separate login flows for Users, Stall Owners, Recycle Scrap Dealers & Admin</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modal-auth')" class="text-slate-400 hover:text-slate-700 text-2xl font-bold">&times;</button>
+      </div>
+
+      <!-- First Opening Entrance Notice -->
+      <div id="modal-entrance-banner" class="bg-emerald-50 border border-emerald-300 p-2.5 rounded-xl text-xs text-emerald-950 flex items-center gap-2 mt-2">
+        <span class="text-base">👋</span>
+        <span><strong>Welcome to SECOND SHELF!</strong> Please select your dedicated portal below and sign in to enter the marketplace.</span>
+      </div>
+
+      <!-- Active Session Notice (Prevents dual multi-role login) -->
+      <div id="modal-active-session-banner" class="hidden bg-amber-50 border-2 border-amber-400 p-3 rounded-xl text-xs text-amber-950 flex items-center justify-between gap-2 mt-2 shadow-sm">
+        <div class="flex items-center gap-2">
+          <span class="text-base">⚠️</span>
+          <span><strong>Active Session:</strong> Currently signed in as <strong id="modal-current-user-name" class="text-slate-900">Priya Sharma</strong> (<span id="modal-current-user-role" class="font-bold text-emerald-800">Seller</span>). Simultaneous login for 2 accounts or 2 role types is blocked.</span>
+        </div>
+        <button type="button" onclick="logout()" class="bg-rose-700 hover:bg-rose-800 text-white font-bold px-2.5 py-1 rounded text-[10px] whitespace-nowrap shadow transition">
+          Sign Out of Current Session
+        </button>
+      </div>
+
+      <!-- Portal Navigation Tabs -->
+      <div class="flex border-b border-slate-200 mt-3 overflow-x-auto text-xs font-bold gap-1 pb-1 flex-shrink-0">
+        <button type="button" id="tab-portal-seller" onclick="switchPortalTab('seller')" class="px-3 py-2 rounded-t border-b-2 border-emerald-600 text-emerald-800 bg-emerald-50/50 flex items-center gap-1 whitespace-nowrap">
+          <span>👤</span> User / Seller
+        </button>
+        <button type="button" id="tab-portal-stall" onclick="switchPortalTab('book_stall')" class="px-3 py-2 rounded-t border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-1 whitespace-nowrap">
+          <span>🏬</span> Stall Owner
+        </button>
+        <button type="button" id="tab-portal-raddi" onclick="switchPortalTab('raddi_owner')" class="px-3 py-2 rounded-t border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-1 whitespace-nowrap">
+          <span>♻️</span> Recycle Scrap Owner
+        </button>
+        <button type="button" id="tab-portal-admin" onclick="switchPortalTab('admin')" class="px-3 py-2 rounded-t border-b-2 border-transparent text-rose-700 hover:text-rose-900 bg-rose-50/40 flex items-center gap-1 whitespace-nowrap" title="Strictly for Website Creator Only">
+          <span>🔐</span> Admin
+        </button>
+        <button type="button" id="tab-portal-signup" onclick="switchPortalTab('signup')" class="px-3 py-2 rounded-t border-b-2 border-transparent text-slate-500 hover:text-slate-800 ml-auto flex items-center gap-1 whitespace-nowrap text-amber-700">
+          <span>➕</span> Register
+        </button>
+      </div>
+
+      <!-- Portal Body (Scrollable) -->
+      <div class="overflow-y-auto py-4 flex-1 pr-1 space-y-4">
+
+        <!-- 1. USER / SELLER LOGIN PORTAL -->
+        <div id="view-portal-seller" class="space-y-4">
+          <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-xl flex items-start gap-2.5">
+            <span class="text-xl">👤</span>
+            <div>
+              <h4 class="font-bold text-xs text-emerald-950 uppercase tracking-wider">User & Student Portal</h4>
+              <p class="text-[11px] text-emerald-900 mt-0.5 leading-relaxed">
+                Log in to submit used textbooks for valuation, request doorstep recycle scrap pickups (≥ 10 kg), view quotes from local stalls, and confirm direct UPI/Cash payments.
+              </p>
+            </div>
+          </div>
+
+          <form id="form-login-seller" onsubmit="handleSellerLogin(event)" class="space-y-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Seller / Student Email Address *</label>
+              <input type="email" required id="seller-email" value="priya.sharma@gmail.com" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 amazon-focus font-medium" />
+            </div>
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="text-xs font-semibold text-slate-700">Password *</label>
+                <button type="button" onclick="openResetPasswordModal()" class="text-[11px] text-emerald-700 hover:underline">Forgot Password?</button>
+              </div>
+              <input type="password" required id="seller-password" value="Password@123" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 amazon-focus font-medium" />
+            </div>
+
+            <button type="submit" class="w-full bg-shelf-gold hover:bg-shelf-goldhover text-slate-950 font-bold py-2.5 rounded-lg text-xs shadow transition flex items-center justify-center gap-1.5">
+              <span>Sign In as Seller / User</span> →
+            </button>
+
+            
+          </form>
+
+          <div class="text-center pt-2 border-t text-xs text-slate-600">
+            Don't have an account yet? 
+            <button onclick="switchPortalTab('signup')" class="text-emerald-700 font-bold hover:underline">Create a Seller Account (18+)</button>
+          </div>
+        </div>
+
+        <!-- 2. BOOK STALL OWNER LOGIN PORTAL -->
+        <div id="view-portal-stall" class="space-y-4 hidden">
+          <div class="bg-blue-50 border border-blue-200 p-3 rounded-xl flex items-start gap-2.5">
+            <span class="text-xl">🏬</span>
+            <div>
+              <h4 class="font-bold text-xs text-blue-950 uppercase tracking-wider">Book Stall Partner Portal</h4>
+              <p class="text-[11px] text-blue-900 mt-0.5 leading-relaxed">
+                For registered used-book shops. Review student book requests, inspect condition photos, make offers capped by system rules, and record direct settlements.
+              </p>
+            </div>
+          </div>
+
+          <form id="form-login-stall" onsubmit="handleStallLogin(event)" class="space-y-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Book Stall Email / Shop ID *</label>
+              <input type="email" required id="stall-email" value="vidyarthi.books@avenue.in" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 amazon-focus font-medium" />
+            </div>
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="text-xs font-semibold text-slate-700">Password *</label>
+                <button type="button" onclick="openResetPasswordModal()" class="text-[11px] text-blue-700 hover:underline">Forgot?</button>
+              </div>
+              <input type="password" required id="stall-password" value="Password@123" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 amazon-focus font-medium" />
+            </div>
+
+            <button type="submit" class="w-full bg-shelf-forest hover:bg-shelf-emerald text-white font-bold py-2.5 rounded-lg text-xs shadow transition flex items-center justify-center gap-1.5">
+              <span>Sign In to Stall Console</span> →
+            </button>
+
+            
+          </form>
+
+          <div class="text-center pt-2 border-t text-xs text-slate-600">
+            Own a bookstore? 
+            <button onclick="switchPortalTab('signup')" class="text-blue-700 font-bold hover:underline">Register New Book Stall (Requires Shop Licence)</button>
+          </div>
+        </div>
+
+        <!-- 3. RECYCLE SCRAP OWNER / DEALER LOGIN PORTAL -->
+        <div id="view-portal-raddi" class="space-y-4 hidden">
+          <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl flex items-start gap-2.5">
+            <span class="text-xl">♻️</span>
+            <div>
+              <h4 class="font-bold text-xs text-amber-950 uppercase tracking-wider">Recycle Scrap Dealer Portal</h4>
+              <p class="text-[11px] text-amber-900 mt-0.5 leading-relaxed">
+                For certified scrap recycling dealers. Browse eligible requests (strictly ≥ 10 kg) by area PIN code, quote competitive ₹/kg rates, and coordinate doorstep collections.
+              </p>
+            </div>
+          </div>
+
+          <form id="form-login-raddi" onsubmit="handleRaddiLogin(event)" class="space-y-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Scrap Dealer Business Email / Yard ID *</label>
+              <input type="email" required id="raddi-email" value="anand@ecorecyclers.in" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 amazon-focus font-medium" />
+            </div>
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="text-xs font-semibold text-slate-700">Password *</label>
+                <button type="button" onclick="openResetPasswordModal()" class="text-[11px] text-amber-800 hover:underline">Forgot?</button>
+              </div>
+              <input type="password" required id="raddi-password" value="Password@123" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 amazon-focus font-medium" />
+            </div>
+
+            <button type="submit" class="w-full bg-shelf-gold hover:bg-shelf-goldhover text-slate-950 font-bold py-2.5 rounded-lg text-xs shadow transition flex items-center justify-center gap-1.5">
+              <span>Sign In to Scrap Dealer Console</span> →
+            </button>
+
+            
+          </form>
+
+          <div class="text-center pt-2 border-t text-xs text-slate-600">
+            Operate a scrap recycling depot? 
+            <button onclick="switchPortalTab('signup')" class="text-amber-800 font-bold hover:underline">Register Scrap Yard (Requires Trade Licence)</button>
+          </div>
+        </div>
+
+        <!-- 4. WEB CREATOR / MASTER ADMIN GATEWAY (Strictly Protected) -->
+        <div id="view-portal-admin" class="space-y-4 hidden">
+          
+          <!-- High Security Warning Banner -->
+          <div class="bg-rose-950 border-2 border-rose-600 p-3.5 rounded-xl text-rose-100 shadow-md">
+            <div class="flex items-center gap-2 mb-1">
+              
+              <span class="text-xl">🛑</span>
+              <h4 class="font-black text-xs uppercase tracking-wider text-rose-300">ADMIN CONSOLE (WEB CREATOR ONLY)</h4>
+            </div>
+            <p class="text-[11px] text-rose-200 leading-relaxed">
+              This administrative gateway is cryptographically guarded. Regular users, book stalls, and recycle scrap owners <strong>cannot access</strong> this console. Requires the <strong>Web Creator Master Security Passkey</strong>.
+            </p>
+          </div>
+
+          <!-- Dynamic Intrusion Alert Box -->
+          <div id="creator-auth-error" class="hidden bg-rose-50 border border-rose-400 p-3 rounded-lg text-rose-800 text-xs font-semibold flex items-center gap-2">
+            <span>⛔</span>
+            <span id="creator-auth-error-msg">ACCESS DENIED: Invalid Creator Master Security Key. Intrusion logged.</span>
+          </div>
+
+          <form id="form-login-creator" onsubmit="handleCreatorAdminLogin(event)" class="space-y-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-800 mb-1">Admin Login ID *</label>
+              <input type="text" required id="creator-email" value="admin" placeholder="admin or admin@secondshelf.in" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 amazon-focus font-mono font-bold" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-800 mb-1">Admin Password *</label>
+              <input type="password" required id="creator-password" value="Admin@2026" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 amazon-focus font-mono" />
+            </div>
+
+            
+
+        <!-- 5. REGISTRATION VIEW (No Admin Option!) -->
+        <div id="view-portal-signup" class="space-y-4 hidden">
+          <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl">
+            <h4 class="font-bold text-xs text-slate-900 uppercase">Create New SECOND SHELF Account</h4>
+            <p class="text-[11px] text-slate-500 mt-0.5">
+              Register as a student book seller, registered bookstore, or paper recycling business.
+            </p>
+          </div>
+
+          <form id="form-register-user" onsubmit="handleSignupSubmit(event)" class="space-y-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Full Name *</label>
+              <input type="text" required id="signup-name" placeholder="e.g. Ramesh Kumar" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 amazon-focus" />
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Email Address *</label>
+                <input type="email" required id="signup-email" placeholder="ramesh@example.com" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 amazon-focus" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Mobile Phone (with OTP) *</label>
+                <input type="tel" required id="signup-phone" placeholder="+91 98765 43210" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 amazon-focus" />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Account Role *</label>
+              <select id="signup-role" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 amazon-focus font-medium">
+                <option value="seller">👤 Seller / General User (Instant Access)</option>
+                <option value="book_stall">🏬 Book Stall Owner (Requires Admin Approval)</option>
+                <option value="raddi_owner">♻️ Recycle Scrap Owner (Requires Admin Approval)</option>
+              </select>
+              <div class="bg-amber-50 border border-amber-200 p-2 rounded text-[10px] text-amber-900 mt-1 font-semibold">
+                🔒 Security Note: Admin accounts CANNOT be self-registered. Admin privileges are restricted exclusively to the Web Creator.
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Create Password *</label>
+              <input type="password" required id="signup-password" placeholder="At least 8 characters" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 amazon-focus" />
+            </div>
+
+            <!-- Mandatory 18+ Age Confirmation -->
+            <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl text-xs flex items-start gap-2">
+              <input type="checkbox" id="signup-age-confirm" required class="mt-0.5 rounded text-amber-600 cursor-pointer" />
+              <label for="signup-age-confirm" class="text-amber-950 cursor-pointer text-[11px] leading-snug">
+                <strong>Age Confirmation (DPDP Act Compliance):</strong> I confirm that I am <strong>18 years of age or older</strong>. (Required for all parties entering into financial marketplace transactions).
+              </label>
+            </div>
+
+            <button type="submit" class="w-full bg-shelf-forest hover:bg-shelf-emerald text-white font-bold py-2.5 rounded-lg text-xs shadow transition">
+              Create Account & Verify Email →
+            </button>
+          </form>
+
+          <div class="text-center pt-2 border-t text-xs text-slate-600">
+            Already have an account? 
+            <button onclick="switchPortalTab('seller')" class="text-emerald-700 font-bold hover:underline">Sign In Here</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="pt-3 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500 flex-shrink-0">
+        <span>Supabase Auth & PostgreSQL Security</span>
+        <button onclick="closeModal('modal-auth')" class="text-slate-600 hover:text-slate-900 font-bold">
+          Close Window
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- MODAL: PLATFORM POLICIES (Privacy, DPDP, Shipping, Cancellation)     -->
+  <!-- ==================================================================== -->
+  <div id="modal-policy" class="fixed inset-0 z-50 modal-backdrop hidden overflow-y-auto p-4 flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 text-slate-900 border border-slate-200 max-h-[85vh] flex flex-col">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 flex-shrink-0">
+        <h3 class="text-lg font-bold text-slate-900" id="policy-modal-title">Platform Policy</h3>
+        <button onclick="closeModal('modal-policy')" class="text-slate-400 hover:text-slate-700 text-2xl font-bold">&times;</button>
+      </div>
+      <div id="policy-modal-body" class="overflow-y-auto py-4 text-xs sm:text-sm text-slate-700 space-y-4 pr-1 leading-relaxed">
+        <!-- Injected dynamically -->
+      </div>
+      <div class="pt-3 border-t border-slate-200 flex justify-end">
+        <button onclick="closeModal('modal-policy')" class="bg-shelf-dark text-white font-semibold px-4 py-1.5 rounded text-xs">
+          Close Policy
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- MODAL: DISPUTE LOGGING (Section 10 of Prompt)                         -->
+  <!-- ==================================================================== -->
+  <div id="modal-dispute" class="fixed inset-0 z-50 modal-backdrop hidden overflow-y-auto p-4 flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-slate-900 border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl text-rose-600">⚠️</span>
+          <h3 class="text-lg font-bold text-slate-900">Log Transaction Dispute</h3>
+        </div>
+        <button onclick="closeModal('modal-dispute')" class="text-slate-400 hover:text-slate-700 text-2xl font-bold">&times;</button>
+      </div>
+
+      <form id="form-dispute" onsubmit="handleDisputeSubmit(event)" class="py-4 space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Request / Reference Number *</label>
+          <input type="text" id="dispute-req-number" required placeholder="e.g. BOK-2026-0001 or RAD-2026-0001" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Dispute Reason *</label>
+          <select id="dispute-reason-type" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus font-medium">
+            <option value="payment_not_received">Payment Recorded but Not Received in Account</option>
+            <option value="wrong_payment_amount">Payment Amount Mismatch</option>
+            <option value="unauthorized_condition_downgrade">Stall Downgraded Condition Unfairly</option>
+            <option value="raddi_weight_discrepancy">Recycle Scrap Weight Scale Inaccuracy</option>
+            <option value="non_delivery_return">Return of Rejected Books Failed</option>
+            <option value="other">Other Violation</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Details & Evidence Description *</label>
+          <textarea id="dispute-details" required rows="3" placeholder="Provide full details of bank statements, timestamps, or conversation summary..." class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus"></textarea>
+        </div>
+        <div class="pt-3 border-t border-slate-200 flex justify-end gap-2">
+          <button type="button" onclick="closeModal('modal-dispute')" class="px-3 py-1.5 border rounded text-xs font-semibold text-slate-700 hover:bg-slate-100">
+            Cancel
+          </button>
+          <button type="submit" class="bg-rose-700 hover:bg-rose-800 text-white font-bold px-4 py-2 rounded text-xs shadow transition">
+            Submit Dispute to Admin →
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  
+  <!-- ==================================================================== -->
+  <!-- MODAL: DIRECT MESSAGES / TRANSACTION CHAT                            -->
+  <!-- ==================================================================== -->
+  <div id="modal-chat" class="fixed inset-0 z-50 modal-backdrop hidden overflow-y-auto p-4 flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full text-slate-900 border border-slate-200 flex flex-col h-[580px] max-h-[90vh]">
+      <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-emerald-950 text-white rounded-t-2xl flex-shrink-0">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">💬</span>
+          <div>
+            <h3 class="font-bold text-sm" id="chat-partner-title">Transaction Chat</h3>
+            <span class="text-[10px] text-emerald-200" id="chat-transaction-subtitle">Ref: Active Deal</span>
+          </div>
+        </div>
+        <button onclick="closeModal('modal-chat')" class="text-emerald-200 hover:text-white text-2xl font-bold">&times;</button>
+      </div>
+
+      <!-- Messages Stream -->
+      <div id="chat-messages-container" class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50">
+        <div class="text-center text-xs text-slate-400 py-8">Loading private conversation...</div>
+      </div>
+
+      <!-- Message Input Form -->
+      <form id="form-chat-send" onsubmit="handleSendMessage(event)" class="p-3 border-t border-slate-200 flex gap-2 bg-white rounded-b-2xl flex-shrink-0">
+        <input 
+          type="text" 
+          id="chat-input-text" 
+          required 
+          placeholder="Type your message..." 
+          class="flex-1 text-xs p-2.5 rounded-lg border border-slate-300 amazon-focus" 
+        />
+        <button type="submit" class="bg-shelf-forest hover:bg-shelf-emerald text-white px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow">
+          <span>Send</span>
+          <span>✈️</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- MODAL: REALTIME NOTIFICATIONS                                        -->
+  <!-- ==================================================================== -->
+  <div id="modal-notifications" class="fixed inset-0 z-50 modal-backdrop hidden overflow-y-auto p-4 flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full text-slate-900 border border-slate-200 flex flex-col max-h-[85vh]">
+      <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-900 text-white rounded-t-2xl flex-shrink-0">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🔔</span>
+          <h3 class="font-bold text-sm">Notifications & Alerts</h3>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="markAllNotificationsAsRead()" class="text-[11px] text-amber-300 hover:underline">Mark all read</button>
+          <button onclick="closeModal('modal-notifications')" class="text-slate-400 hover:text-white text-2xl font-bold">&times;</button>
+        </div>
+      </div>
+
+      <div id="notifications-list-container" class="overflow-y-auto p-4 space-y-2.5 flex-1 divide-y divide-slate-100">
+        <div class="text-center text-xs text-slate-400 py-6">No notifications yet</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- MODAL: CONTACT SUPPORT & FILE COMPLAINT                              -->
+  <!-- ==================================================================== -->
+  <div id="modal-complaint" class="fixed inset-0 z-50 modal-backdrop hidden overflow-y-auto p-4 flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full text-slate-900 border border-slate-200 p-6 space-y-4">
+      <div class="flex items-center justify-between border-b pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🛡️</span>
+          <h3 class="font-bold text-base text-slate-900">Support & Dispute Grievance</h3>
+        </div>
+        <button onclick="closeModal('modal-complaint')" class="text-slate-400 hover:text-slate-700 text-2xl font-bold">&times;</button>
+      </div>
+      <form id="form-complaint" onsubmit="handleComplaintSubmit(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Issue Subject *</label>
+          <input type="text" required id="complaint-subject" placeholder="e.g. Payment not received, Condition dispute" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Transaction Ref / Order Number</label>
+          <input type="text" id="complaint-trx-ref" placeholder="e.g. BOK-2026-0001 or SCR-2026-0001" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Detailed Explanation *</label>
+          <textarea required id="complaint-description" rows="4" placeholder="Provide full details of the discrepancy..." class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus"></textarea>
+        </div>
+        <div class="flex justify-end gap-2 pt-2 border-t">
+          <button type="button" onclick="closeModal('modal-complaint')" class="px-3 py-1.5 border rounded text-xs font-semibold text-slate-700 hover:bg-slate-100">Cancel</button>
+          <button type="submit" class="bg-rose-700 hover:bg-rose-800 text-white font-bold px-4 py-1.5 rounded text-xs shadow transition">Submit Complaint →</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- MODAL: SUPABASE BACKEND CONFIGURATION                                -->
+  <!-- ==================================================================== -->
+  <div id="modal-supabase-config" class="fixed inset-0 z-50 modal-backdrop hidden overflow-y-auto p-4 flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full text-slate-900 border border-slate-200 p-6 space-y-4">
+      <div class="flex items-center justify-between border-b pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">⚡</span>
+          <div>
+            <h3 class="font-bold text-base text-slate-900">Supabase Backend Connection</h3>
+            <p class="text-[11px] text-slate-500">Live PostgreSQL Database & Authentication Setup</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modal-supabase-config')" class="text-slate-400 hover:text-slate-700 text-2xl font-bold">&times;</button>
+      </div>
+
+      <div id="supabase-status-banner" class="p-3 rounded-lg text-xs font-medium flex items-center gap-2 bg-emerald-50 text-emerald-900 border border-emerald-200">
+        <span class="text-base" id="supabase-status-icon">🟢</span>
+        <span id="supabase-status-detail">Checking Supabase connection...</span>
+      </div>
+
+      <form id="form-supabase-config" onsubmit="handleSaveSupabaseConfig(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-800 mb-1">Supabase Project URL *</label>
+          <input type="url" required id="cfg-supabase-url" placeholder="https://xyzcompany.supabase.co" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 font-mono amazon-focus" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-800 mb-1">Supabase Anon Public API Key *</label>
+          <textarea required id="cfg-supabase-key" rows="3" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." class="w-full text-xs p-2.5 rounded-lg border border-slate-300 font-mono amazon-focus"></textarea>
+          <span class="text-[10px] text-slate-500 block mt-1">Found in your Supabase Dashboard under <strong>Project Settings → API</strong>.</span>
+        </div>
+        <div class="flex justify-between items-center pt-2 border-t">
+          <button type="button" onclick="testSupabaseConnection()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 border rounded text-xs font-bold">
+            🔌 Test Connection
+          </button>
+          <div class="flex gap-2">
+            <button type="button" onclick="closeModal('modal-supabase-config')" class="px-3 py-1.5 border rounded text-xs font-semibold text-slate-700 hover:bg-slate-100">Cancel</button>
+            <button type="submit" class="bg-shelf-forest hover:bg-shelf-emerald text-white font-bold px-4 py-1.5 rounded text-xs shadow transition">Save & Connect →</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- MODAL: PASSWORD RESET (Real Supabase Auth Email Dispatch)             -->
+  <!-- ==================================================================== -->
+  <div id="modal-reset-password" class="fixed inset-0 z-50 modal-backdrop hidden overflow-y-auto p-4 flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full text-slate-900 border border-slate-200 p-6 space-y-4">
+      <div class="flex items-center justify-between border-b pb-2">
+        <h3 class="font-bold text-sm text-slate-900">Reset Your Password</h3>
+        <button onclick="closeModal('modal-reset-password')" class="text-slate-400 hover:text-slate-700 text-2xl font-bold">&times;</button>
+      </div>
+      <p class="text-xs text-slate-600">Enter your registered email address. Supabase Auth will send you a secure password reset link.</p>
+      <form onsubmit="handlePasswordResetSubmit(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Email Address *</label>
+          <input type="email" required id="reset-email" class="w-full text-xs p-2 rounded border border-slate-300 amazon-focus" />
+        </div>
+        <div class="flex justify-end gap-2 pt-2 border-t">
+          <button type="button" onclick="closeModal('modal-reset-password')" class="px-3 py-1.5 border rounded text-xs">Cancel</button>
+          <button type="submit" class="bg-shelf-gold hover:bg-shelf-goldhover text-slate-950 font-bold px-4 py-1.5 rounded text-xs shadow">Send Reset Link →</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Load JavaScript Application Logic -->
+  <script src="supabase-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

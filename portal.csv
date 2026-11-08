@@ -1,0 +1,5 @@
+Portal Name,Target Audience,Access Requirement,Credentials Flow
+1. User / Seller Portal,Students & Book Sellers,Real email verification + 18+ age confirmation,Self-register with Email/Password -> Verify Email Link -> Login
+2. Book Stall Owner Portal,Licensed Used Bookstore Partners,Real email verification + Admin review of trade licence,Self-register with Shop Licence -> Verify Email -> Admin Approves in Admin Console -> Login
+3. Recycle Scrap Owner Portal,Certified Paper Recycling Dealers,Real email verification + Admin review of pollution/trade licence,Self-register with Yard Licence -> Verify Email -> Admin Approves in Admin Console -> Login
+4. Web Creator Only Admin,Single Platform Administrator,Server-side PostgreSQL provisioning via provision_admin.sql,Provisioned via Supabase SQL Editor -> Master Admin Console
